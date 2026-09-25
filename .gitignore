@@ -1,0 +1,17 @@
+# Power BI local settings and cached data (PBIP)
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# Power BI binary and backup files
+*.pbix
+*.pbix.bak
+
+# Local data files (data is loaded from PHS open data via URL)
+data/**/*.csv
+data/**/*.xlsx
+!data/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
