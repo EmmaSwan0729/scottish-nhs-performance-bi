@@ -6,10 +6,15 @@
 *.pbix
 *.pbix.bak
 
-# Local data files (data is loaded from PHS open data via URL)
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local data files: only the bronze layer is committed
 data/**/*.csv
 data/**/*.xlsx
-!data/.gitkeep
+!data/bronze/**/*.csv
 
 # OS files
 .DS_Store
