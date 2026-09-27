@@ -1,0 +1,831 @@
+createOrReplace
+
+	model Model
+		culture: en-US
+		defaultPowerBIDataSourceVersion: powerBI_V3
+		sourceQueryCulture: en-US
+		dataAccessOptions
+			legacyRedirects
+			returnErrorValuesAsNull
+
+		table Fact_OngoingWaits
+			lineageTag: c669cbde-fdb4-4a20-92cf-b35d9e6e3ff2
+
+			measure 'Patients Waiting' =
+					
+					VAR LatestPeriod = MAX ( Fact_OngoingWaits[PeriodEndDate] )
+					VAR BoardSelected = ISFILTERED ( Fact_OngoingWaits[HealthBoardCode] )
+					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
+					RETURN
+					    CALCULATE (
+					        SUM ( Fact_OngoingWaits[NumberWaiting] ),
+					        Fact_OngoingWaits[PeriodEndDate] = LatestPeriod,
+					        KEEPFILTERS (
+					            FILTER (
+					                ALL ( Fact_OngoingWaits[HealthBoardCode] ),
+					                IF (
+					                    BoardSelected,
+					                    Fact_OngoingWaits[HealthBoardCode] <> "S92000003",
+					                    Fact_OngoingWaits[HealthBoardCode] = "S92000003"
+					                )
+					            )
+					        ),
+					        KEEPFILTERS (
+					            FILTER (
+					                ALL ( Fact_OngoingWaits[SpecialtyCode] ),
+					                IF (
+					                    SpecialtySelected,
+					                    Fact_OngoingWaits[SpecialtyCode] <> "Z9",
+					                    Fact_OngoingWaits[SpecialtyCode] = "Z9"
+					                )
+					            )
+					        )
+					    )
+				formatString: 0
+				lineageTag: 2cbaa34b-cdbf-42a0-b523-b6cdb8da559e
+
+			column HealthBoardCode
+				dataType: string
+				lineageTag: 8680db3a-b243-45c2-94f8-5d1150ee13c6
+				summarizeBy: none
+				sourceColumn: HealthBoardCode
+
+				annotation SummarizationSetBy = Automatic
+
+			column HBTQF
+				dataType: string
+				lineageTag: 3df81189-35f8-4710-949d-2b574da07cf5
+				summarizeBy: none
+				sourceColumn: HBTQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column PatientType
+				dataType: string
+				lineageTag: 6e723c42-2284-4070-a69d-f64bdf5bb85b
+				summarizeBy: none
+				sourceColumn: PatientType
+
+				annotation SummarizationSetBy = Automatic
+
+			column SpecialtyCode
+				dataType: string
+				lineageTag: c7f544e2-8036-441e-8ff9-b285bbcb8758
+				summarizeBy: none
+				sourceColumn: SpecialtyCode
+
+				annotation SummarizationSetBy = Automatic
+
+			column SpecialtyQF
+				dataType: string
+				lineageTag: 20922a17-3c5a-4d15-aace-0ff7583baff8
+				summarizeBy: none
+				sourceColumn: SpecialtyQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberWaiting
+				dataType: int64
+				formatString: 0
+				lineageTag: 6684c97b-9d55-40c7-b489-d7fe7ab6e469
+				summarizeBy: sum
+				sourceColumn: NumberWaiting
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberWaitingQF
+				dataType: string
+				lineageTag: fb10967e-d41b-4ed8-bd6a-e4fbbaa43d17
+				summarizeBy: none
+				sourceColumn: NumberWaitingQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberOver12Weeks
+				dataType: int64
+				formatString: 0
+				lineageTag: 0d10e6e9-81fc-4431-8f23-6354c8f1a34a
+				summarizeBy: sum
+				sourceColumn: NumberOver12Weeks
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberOver12WeeksQF
+				dataType: string
+				lineageTag: 98e9e0dd-eb8d-4819-8536-b3ec07dd3352
+				summarizeBy: none
+				sourceColumn: NumberOver12WeeksQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column MedianDays
+				dataType: double
+				lineageTag: 9a9a9816-42fd-4858-ae82-a15044606e40
+				summarizeBy: sum
+				sourceColumn: MedianDays
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column MedianDaysQF
+				dataType: string
+				lineageTag: d75359da-785e-462d-9034-2f7a46d8b374
+				summarizeBy: none
+				sourceColumn: MedianDaysQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column P90Days
+				dataType: double
+				lineageTag: d081ff02-9df0-43e3-b4b4-b5feb37e6e6e
+				summarizeBy: sum
+				sourceColumn: P90Days
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column P90DaysQF
+				dataType: string
+				lineageTag: 817350a4-af74-4959-9c51-d98d05fbe4e2
+				summarizeBy: none
+				sourceColumn: P90DaysQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column PeriodEndDate
+				dataType: dateTime
+				formatString: Long Date
+				lineageTag: c83c727f-6f45-4c5d-b0fc-24692d107ef9
+				summarizeBy: none
+				sourceColumn: PeriodEndDate
+
+				variation Variation
+					isDefault
+					relationship: b02b3516-f707-47cd-89a5-2972a658e16b
+					defaultHierarchy: LocalDateTable_58dbcf4f-22f3-42b8-a2f1-41d76df8d46b.'Date Hierarchy'
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation UnderlyingDateTimeDataType = Date
+
+			partition Fact_OngoingWaits = m
+				mode: import
+				source =
+						let
+						  Source = src_OngoingWaits,
+						  QfColumns = List.Select(Table.ColumnNames(Source), each Text.EndsWith(_, "QF")),
+						  ValueColumns = {"Specialty", "NumberWaiting", "NumberWaitingOver12Weeks", "Median", "90thPercentile"},
+						  BlanksToNull = Table.ReplaceValue(Source, "", null, Replacer.ReplaceValue, ValueColumns & QfColumns),
+						  AddedDate = Table.AddColumn(
+						    BlanksToNull,
+						    "PeriodEndDate",
+						    each #date(
+						      Number.From(Text.Start([MonthEnding], 4)),
+						      Number.From(Text.Middle([MonthEnding], 4, 2)),
+						      Number.From(Text.End([MonthEnding], 2))
+						    ),
+						    type date
+						  ),
+						  RemoveOldDate = Table.RemoveColumns(AddedDate, {"MonthEnding"}),
+						  Typed = Table.TransformColumnTypes(
+						  RemoveOldDate,
+						    {
+						      {"NumberWaiting", Int64.Type},
+						      {"NumberWaitingOver12Weeks", Int64.Type},
+						      {"Median", type number},
+						      {"90thPercentile", type number}
+						    }
+						  ),
+						  Renamed = Table.RenameColumns(
+						  Typed,
+						    {
+						      {"HBT", "HealthBoardCode"},
+						      {"Specialty", "SpecialtyCode"},
+						      {"NumberWaitingOver12Weeks", "NumberOver12Weeks"},
+						      {"NumberWaitingOver12WeeksQF", "NumberOver12WeeksQF"},
+						      {"Median", "MedianDays"},
+						      {"MedianQF", "MedianDaysQF"},
+						      {"90thPercentile", "P90Days"},
+						      {"90thPercentileQF", "P90DaysQF"}
+						    }
+						  )
+						in
+						  Renamed
+
+			annotation PBI_ResultType = Table
+
+		table DateTableTemplate_a8fe071a-1e7f-4917-913b-0166a894585e
+			isHidden
+			isPrivate
+			lineageTag: 5a238bdf-01f7-4716-8e7c-7878a3e99f10
+
+			column Date
+				dataType: dateTime
+				isHidden
+				formatString: General Date
+				lineageTag: a8991227-8607-4f3b-8e18-3911744ada32
+				dataCategory: PaddedDateTableDates
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Date]
+
+				annotation SummarizationSetBy = User
+
+			column Year = YEAR([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 5306ad63-ca7d-4ba1-a6eb-b8b66c91db89
+				dataCategory: Years
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Year
+
+			column MonthNo = MONTH([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 6d8d1ec5-2a89-4f72-8883-a52cf1ab5f3f
+				dataCategory: MonthOfYear
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = MonthNumber
+
+			column Month = FORMAT([Date], "MMMM")
+				dataType: string
+				isHidden
+				lineageTag: 6f52efcc-821f-442f-9475-238d7dbb4c05
+				dataCategory: Months
+				summarizeBy: none
+				sortByColumn: MonthNo
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Month
+
+			column QuarterNo = INT(([MonthNo] + 2) / 3)
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 99cab145-3739-468c-b36f-e43c350b6b9a
+				dataCategory: QuarterOfYear
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = QuarterNumber
+
+			column Quarter = "Qtr " & [QuarterNo]
+				dataType: string
+				isHidden
+				lineageTag: 1b2d9536-b60c-4981-b759-a90efb3de412
+				dataCategory: Quarters
+				summarizeBy: none
+				sortByColumn: QuarterNo
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Quarter
+
+			column Day = DAY([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: bca1e6e3-311f-460d-8801-edb95c459293
+				dataCategory: DayOfMonth
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Day
+
+			hierarchy 'Date Hierarchy'
+				lineageTag: 42a145d2-2966-4f80-a3a2-4756a2dafbbf
+
+				level Year
+					lineageTag: 17aa53e0-d057-40e3-8da5-025284876a6c
+					column: Year
+
+				level Quarter
+					lineageTag: 80ee168e-34d0-434d-bb0a-352f13fdc0c8
+					column: Quarter
+
+				level Month
+					lineageTag: 47ca947b-8cdd-4e04-821b-be3e0f94024d
+					column: Month
+
+				level Day
+					lineageTag: 9fda9ddb-8485-4aca-ae6c-14d335aa9177
+					column: Day
+
+				annotation TemplateId = DateHierarchy
+
+			partition DateTableTemplate_a8fe071a-1e7f-4917-913b-0166a894585e = calculated
+				mode: import
+				source = Calendar(Date(2015,1,1), Date(2015,1,1))
+
+			annotation __PBI_TemplateDateTable = true
+
+			annotation DefaultItem = DateHierarchy
+
+		table LocalDateTable_58dbcf4f-22f3-42b8-a2f1-41d76df8d46b
+			isHidden
+			showAsVariationsOnly
+			lineageTag: 34583aad-3480-4de2-8bb6-0efc7230d403
+
+			column Date
+				dataType: dateTime
+				isHidden
+				formatString: General Date
+				lineageTag: f7b07efe-9c4c-4989-93f4-2412a6e785a5
+				dataCategory: PaddedDateTableDates
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Date]
+
+				annotation SummarizationSetBy = User
+
+			column Year = YEAR([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 6a8e0656-58b8-4548-8cb2-d156ef96894e
+				dataCategory: Years
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Year
+
+			column MonthNo = MONTH([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 36154334-2f9c-44f1-a09b-812cb724cb4b
+				dataCategory: MonthOfYear
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = MonthNumber
+
+			column Month = FORMAT([Date], "MMMM")
+				dataType: string
+				isHidden
+				lineageTag: dba430f1-3e05-4d53-977b-0523d73e90df
+				dataCategory: Months
+				summarizeBy: none
+				sortByColumn: MonthNo
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Month
+
+			column QuarterNo = INT(([MonthNo] + 2) / 3)
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: aa3eec4c-a5ef-4642-b240-508acd0c6f37
+				dataCategory: QuarterOfYear
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = QuarterNumber
+
+			column Quarter = "Qtr " & [QuarterNo]
+				dataType: string
+				isHidden
+				lineageTag: 97caa638-150b-4eb7-ad71-f87d5a5b4492
+				dataCategory: Quarters
+				summarizeBy: none
+				sortByColumn: QuarterNo
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Quarter
+
+			column Day = DAY([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 82c7dc5c-92b2-457b-b192-e5b640b496b1
+				dataCategory: DayOfMonth
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Day
+
+			hierarchy 'Date Hierarchy'
+				lineageTag: fc00f60d-6b36-4e57-a1d4-6ed42f6cb74c
+
+				level Year
+					lineageTag: 5b4d2fbd-e40a-4da8-bb80-cdbae5986aff
+					column: Year
+
+				level Quarter
+					lineageTag: 56d251ac-95a1-4333-b33f-3b1a8c5b568b
+					column: Quarter
+
+				level Month
+					lineageTag: b7ebae94-0502-4743-8f4e-76134cf7173a
+					column: Month
+
+				level Day
+					lineageTag: 40f61aa9-fa5b-4dcb-a806-0f60ea0bc737
+					column: Day
+
+				annotation TemplateId = DateHierarchy
+
+			partition LocalDateTable_58dbcf4f-22f3-42b8-a2f1-41d76df8d46b = calculated
+				mode: import
+				source = Calendar(Date(Year(MIN('Fact_OngoingWaits'[PeriodEndDate])), 1, 1), Date(Year(MAX('Fact_OngoingWaits'[PeriodEndDate])), 12, 31))
+
+			annotation __PBI_LocalDateTable = true
+
+		table Fact_CompletedWaits
+			lineageTag: daef1665-92c1-4557-9e6e-cc38ff436ac5
+
+			column HealthBoardCode
+				dataType: string
+				lineageTag: 8591c034-a526-48f5-b3a3-7e813767cf19
+				summarizeBy: none
+				sourceColumn: HealthBoardCode
+
+				annotation SummarizationSetBy = Automatic
+
+			column HBTQF
+				dataType: string
+				lineageTag: babbde84-4649-4961-bda4-681c625eff79
+				summarizeBy: none
+				sourceColumn: HBTQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column PatientType
+				dataType: string
+				lineageTag: 5bfdf7ba-2bbd-42b8-9549-24225b0e55bd
+				summarizeBy: none
+				sourceColumn: PatientType
+
+				annotation SummarizationSetBy = Automatic
+
+			column SpecialtyCode
+				dataType: string
+				lineageTag: d211cfac-2648-432f-9c0e-685efc90cb9e
+				summarizeBy: none
+				sourceColumn: SpecialtyCode
+
+				annotation SummarizationSetBy = Automatic
+
+			column SpecialtyQF
+				dataType: string
+				lineageTag: aee7f0cc-70aa-44b1-bc9d-dc688039e308
+				summarizeBy: none
+				sourceColumn: SpecialtyQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberSeen
+				dataType: int64
+				formatString: 0
+				lineageTag: 7879971a-02df-4bc4-be9e-4a258a90e705
+				summarizeBy: sum
+				sourceColumn: NumberSeen
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberSeenQF
+				dataType: string
+				lineageTag: 792fe22f-36df-4dbe-bd96-f0de93ad81b7
+				summarizeBy: none
+				sourceColumn: NumberSeenQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberOver12Weeks
+				dataType: int64
+				formatString: 0
+				lineageTag: 6b9fbadc-0424-4a9d-a50a-a3677fd855bb
+				summarizeBy: sum
+				sourceColumn: NumberOver12Weeks
+
+				annotation SummarizationSetBy = Automatic
+
+			column NumberOver12WeeksQF
+				dataType: string
+				lineageTag: 67ac7e4c-eaaf-44bb-8500-d1b2eca6690c
+				summarizeBy: none
+				sourceColumn: NumberOver12WeeksQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column MedianDays
+				dataType: double
+				lineageTag: 7d6f3ec6-52e6-4f72-bda1-235125681cef
+				summarizeBy: sum
+				sourceColumn: MedianDays
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column MedianDaysQF
+				dataType: string
+				lineageTag: 83c3eeef-aad0-4068-821a-f3c0b1f82af7
+				summarizeBy: none
+				sourceColumn: MedianDaysQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column P90Days
+				dataType: double
+				lineageTag: 4b6e3fc3-f15d-43dd-941b-9decb29f4b68
+				summarizeBy: sum
+				sourceColumn: P90Days
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			column P90DaysQF
+				dataType: string
+				lineageTag: f53d3e62-6525-40c3-ab27-154ab366744d
+				summarizeBy: none
+				sourceColumn: P90DaysQF
+
+				annotation SummarizationSetBy = Automatic
+
+			column PeriodEndDate
+				dataType: dateTime
+				formatString: Long Date
+				lineageTag: 3cfa4fa0-3c05-414a-aa3c-e991f9bf7f4d
+				summarizeBy: none
+				sourceColumn: PeriodEndDate
+
+				variation Variation
+					isDefault
+					relationship: d66faafe-dac5-4d67-9c71-2ef662675fb9
+					defaultHierarchy: LocalDateTable_1d1eaa4c-ae85-4730-9050-a3a9f8370b21.'Date Hierarchy'
+
+				annotation SummarizationSetBy = Automatic
+
+				annotation UnderlyingDateTimeDataType = Date
+
+			partition Fact_CompletedWaits = m
+				mode: import
+				source =
+						let
+						  Source = src_CompletedWaits,
+						  QfColumns = List.Select(Table.ColumnNames(Source), each Text.EndsWith(_, "QF")),
+						  ValueColumns = {"Specialty", "NumberSeen", "WaitedOver12Weeks", "Median", "90thPercentile"},
+						  BlanksToNull = Table.ReplaceValue(Source, "", null, Replacer.ReplaceValue, ValueColumns & QfColumns),
+						  AddedDate = Table.AddColumn(
+						    BlanksToNull,
+						    "PeriodEndDate",
+						    each #date(
+						      Number.From(Text.Start([QuarterEnding], 4)),
+						      Number.From(Text.Middle([QuarterEnding], 4, 2)),
+						      Number.From(Text.End([QuarterEnding], 2))
+						    ),
+						    type date
+						  ),
+						  RemoveOldDate = Table.RemoveColumns(AddedDate, {"QuarterEnding"}),
+						  Typed = Table.TransformColumnTypes(
+						    RemoveOldDate,
+						    {
+						      {"NumberSeen", Int64.Type},
+						      {"WaitedOver12Weeks", Int64.Type},
+						      {"Median", type number},
+						      {"90thPercentile", type number}
+						    }
+						  ),
+						  Renamed = Table.RenameColumns(
+						    Typed,
+						    {
+						      {"HBT", "HealthBoardCode"},
+						      {"Specialty", "SpecialtyCode"},
+						      {"WaitedOver12Weeks", "NumberOver12Weeks"},
+						      {"WaitedOver12WeeksQF", "NumberOver12WeeksQF"},
+						      {"Median", "MedianDays"},
+						      {"MedianQF", "MedianDaysQF"},
+						      {"90thPercentile", "P90Days"},
+						      {"90thPercentileQF", "P90DaysQF"}
+						    }
+						  )
+						in
+						  Renamed
+
+			annotation PBI_ResultType = Table
+
+		table LocalDateTable_1d1eaa4c-ae85-4730-9050-a3a9f8370b21
+			isHidden
+			showAsVariationsOnly
+			lineageTag: 9bc6dd68-44f0-4fac-835a-6da11d0d04fd
+
+			column Date
+				dataType: dateTime
+				isHidden
+				formatString: General Date
+				lineageTag: 97f5dbf2-c308-40b7-86a6-2bcb66096b16
+				dataCategory: PaddedDateTableDates
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Date]
+
+				annotation SummarizationSetBy = User
+
+			column Year = YEAR([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 3ab25b96-0883-4e3e-b0eb-812b141872be
+				dataCategory: Years
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Year
+
+			column MonthNo = MONTH([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 48c36241-b761-47a2-b7f6-a210c7285351
+				dataCategory: MonthOfYear
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = MonthNumber
+
+			column Month = FORMAT([Date], "MMMM")
+				dataType: string
+				isHidden
+				lineageTag: caeedf1a-2ae2-4caf-aa47-2a43a6ad30c4
+				dataCategory: Months
+				summarizeBy: none
+				sortByColumn: MonthNo
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Month
+
+			column QuarterNo = INT(([MonthNo] + 2) / 3)
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 8753f690-9566-426b-abf1-e6c581c01977
+				dataCategory: QuarterOfYear
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = QuarterNumber
+
+			column Quarter = "Qtr " & [QuarterNo]
+				dataType: string
+				isHidden
+				lineageTag: 25dbd140-1ebf-4c56-b116-ceed94753606
+				dataCategory: Quarters
+				summarizeBy: none
+				sortByColumn: QuarterNo
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Quarter
+
+			column Day = DAY([Date])
+				dataType: int64
+				isHidden
+				formatString: 0
+				lineageTag: 539bc0c3-3a8f-4d8e-a72b-c58b09d133a6
+				dataCategory: DayOfMonth
+				summarizeBy: none
+
+				annotation SummarizationSetBy = User
+
+				annotation TemplateId = Day
+
+			hierarchy 'Date Hierarchy'
+				lineageTag: f416eb75-c517-402d-b9d2-a4629020e7ae
+
+				level Year
+					lineageTag: d8f2de5d-296c-4fe9-81b1-c342b0a6219b
+					column: Year
+
+				level Quarter
+					lineageTag: 012dc3cf-ade9-443f-a916-e3aa807eb3de
+					column: Quarter
+
+				level Month
+					lineageTag: df3ae391-4ab9-479f-9c75-19e22b368edd
+					column: Month
+
+				level Day
+					lineageTag: 3bb55cb5-a1fb-4a20-a913-1d31683c1884
+					column: Day
+
+				annotation TemplateId = DateHierarchy
+
+			partition LocalDateTable_1d1eaa4c-ae85-4730-9050-a3a9f8370b21 = calculated
+				mode: import
+				source = Calendar(Date(Year(MIN('Fact_CompletedWaits'[PeriodEndDate])), 1, 1), Date(Year(MAX('Fact_CompletedWaits'[PeriodEndDate])), 12, 31))
+
+			annotation __PBI_LocalDateTable = true
+
+		relationship b02b3516-f707-47cd-89a5-2972a658e16b
+			joinOnDateBehavior: datePartOnly
+			fromColumn: Fact_OngoingWaits.PeriodEndDate
+			toColumn: LocalDateTable_58dbcf4f-22f3-42b8-a2f1-41d76df8d46b.Date
+
+		relationship d66faafe-dac5-4d67-9c71-2ef662675fb9
+			joinOnDateBehavior: datePartOnly
+			fromColumn: Fact_CompletedWaits.PeriodEndDate
+			toColumn: LocalDateTable_1d1eaa4c-ae85-4730-9050-a3a9f8370b21.Date
+
+		expression fnLoadBronzeTable =
+				(TableName as text) as table =>
+				let
+				    Source = Csv.Document(
+				        Web.Contents(
+				            "https://raw.githubusercontent.com",
+				            [RelativePath = GitHubRepoPath & "/data/bronze/" & TableName & "/" & TableName & ".csv"]
+				        ),
+				        [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+				    ),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
+				in
+				    PromotedHeaders
+			lineageTag: 3c566989-0c36-4140-bb48-abb2b01f8139
+
+			annotation PBI_ResultType = Function
+
+		expression src_OngoingWaits =
+				let
+				  Source = fnLoadBronzeTable("ongoing_waits")
+				in
+				  Source
+			lineageTag: c4ea1aae-2623-45dc-a7e6-7b52a6305d18
+
+			annotation PBI_ResultType = Table
+
+		expression src_CompletedWaits =
+				let
+				    Source = fnLoadBronzeTable("completed_waits")
+				in
+				    Source
+			lineageTag: f7789dc2-6be5-4e4c-8113-e738ed145e4e
+
+			annotation PBI_ResultType = Table
+
+		expression ResourceId_OngoingWaits = "5816ec92-66bf-4033-ae55-9df45ff19d49" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: 1fab1681-d8d4-44c2-aaae-bb85b143916d
+
+			annotation PBI_ResultType = Text
+
+		expression ResourceId_CompletedWaits = "4c091d26-1492-41e5-9577-832cbc1cd4cf" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: e3721615-2d7b-4928-b3e7-596187807b8d
+
+			annotation PBI_ResultType = Text
+
+		expression ResourceId_HealthBoardLabels = "652ff726-e676-4a20-abda-435b98dd7bdc" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: b77ff747-30c6-48dd-aa6d-2bcdcb1665ab
+
+			annotation PBI_ResultType = Text
+
+		expression ResourceId_CountryLabels = "9c6e6c56-2697-4184-92c6-60d69c2b6792" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: b069a788-e894-4e09-a885-e21740493d6f
+
+			annotation PBI_ResultType = Text
+
+		expression ResourceId_SpecialHealthBoardLabels = "0450a5a2-f600-4569-a9ae-5d6317141899" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: 495fe319-e410-41fb-a43e-89b5c8aaf14d
+
+			annotation PBI_ResultType = Text
+
+		expression ResourceId_SpecialtyLabels = "6f2e3da0-b1b5-46cc-ac04-78495daedfa3" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: f45ea326-978a-44ab-9bfb-47dd37158baf
+
+			annotation PBI_ResultType = Text
+
+		expression GitHubRepoPath = "EmmaSwan0729/scottish-nhs-performance-bi/main" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+			lineageTag: 746bda33-c182-4d9b-ad70-6d61e05cb989
+
+			annotation PBI_ResultType = Text
+
+		annotation __PBI_TimeIntelligenceEnabled = 1
+
+		annotation PBI_QueryOrder = ["ResourceId_OngoingWaits","ResourceId_CompletedWaits","ResourceId_HealthBoardLabels","ResourceId_CountryLabels","ResourceId_SpecialHealthBoardLabels","ResourceId_SpecialtyLabels","fnLoadBronzeTable","src_OngoingWaits","GitHubRepoPath","src_CompletedWaits","Fact_OngoingWaits","Fact_CompletedWaits"]
+
+		annotation __LastRPTime = 134349334522527564
+
+		annotation PBI_ProTooling = ["WebModelingEdit","DaxQueryView_Desktop"]
+
