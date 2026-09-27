@@ -13,7 +13,15 @@ createOrReplace
 
 			measure 'Patients Waiting' =
 					
-					VAR LatestPeriod = MAX ( Fact_OngoingWaits[PeriodEndDate] )
+					VAR LatestPeriod =
+					    CALCULATE (
+					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
+					        REMOVEFILTERS (
+					            Fact_OngoingWaits[HealthBoardCode],
+					            Fact_OngoingWaits[SpecialtyCode],
+					            Fact_OngoingWaits[PatientType]
+					        )
+					    )
 					VAR BoardSelected = ISFILTERED ( Fact_OngoingWaits[HealthBoardCode] )
 					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
 					RETURN
@@ -43,6 +51,53 @@ createOrReplace
 					    )
 				formatString: 0
 				lineageTag: 2cbaa34b-cdbf-42a0-b523-b6cdb8da559e
+
+			measure '% Waiting Over 12 Weeks' =
+					
+					DIVIDE ( [Waiting Over 12 Weeks], [Patients Waiting] )
+				formatString: 0.0%;-0.0%;0.0%
+				lineageTag: c5d0c8f8-d0a1-4c3e-bf34-b06c1f4a8da1
+
+			measure 'Waiting Over 12 Weeks' =
+					
+					VAR LatestPeriod =
+					    CALCULATE (
+					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
+					        REMOVEFILTERS (
+					            Fact_OngoingWaits[HealthBoardCode],
+					            Fact_OngoingWaits[SpecialtyCode],
+					            Fact_OngoingWaits[PatientType]
+					        )
+					    )
+					VAR BoardSelected = ISFILTERED ( Fact_OngoingWaits[HealthBoardCode] )
+					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
+					RETURN
+					    CALCULATE (
+					        SUM ( Fact_OngoingWaits[NumberOver12Weeks] ),
+					        Fact_OngoingWaits[PeriodEndDate] = LatestPeriod,
+					        KEEPFILTERS (
+					            FILTER (
+					                ALL ( Fact_OngoingWaits[HealthBoardCode] ),
+					                IF (
+					                    BoardSelected,
+					                    Fact_OngoingWaits[HealthBoardCode] <> "S92000003",
+					                    Fact_OngoingWaits[HealthBoardCode] = "S92000003"
+					                )
+					            )
+					        ),
+					        KEEPFILTERS (
+					            FILTER (
+					                ALL ( Fact_OngoingWaits[SpecialtyCode] ),
+					                IF (
+					                    SpecialtySelected,
+					                    Fact_OngoingWaits[SpecialtyCode] <> "Z9",
+					                    Fact_OngoingWaits[SpecialtyCode] = "Z9"
+					                )
+					            )
+					        )
+					    )
+				formatString: 0
+				lineageTag: 73e7af62-ba57-45ef-bc99-3ff478d395a2
 
 			column HealthBoardCode
 				dataType: string
@@ -827,5 +882,5 @@ createOrReplace
 
 		annotation __LastRPTime = 134349334522527564
 
-		annotation PBI_ProTooling = ["WebModelingEdit","DaxQueryView_Desktop"]
+		annotation PBI_ProTooling = ["WebModelingEdit","DaxQueryView_Desktop","TMDLView_Desktop"]
 
