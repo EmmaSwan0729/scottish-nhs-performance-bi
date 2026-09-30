@@ -67,7 +67,7 @@ filtered to HBT = S92000003 and Specialty = Z9, pivoted by period and PatientTyp
 checked which S08 boards had null values in the gap months (only S08000030).
 
 ### Follow-ups
-- [ ] Update Patients Waiting, Waiting Over 12 Weeks and Patients Seen with the
+- [x] Update Patients Waiting, Waiting Over 12 Weeks and Patients Seen with the
       suppression guard
 - [ ] Replace S08000030 with the board name once the PHS lookup table is available
 - [ ] Note the gap in data-dictionary.md under the relevant fields
