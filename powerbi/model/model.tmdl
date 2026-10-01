@@ -186,10 +186,10 @@ createOrReplace
 			column MedianDays
 				dataType: double
 				lineageTag: 9a9a9816-42fd-4858-ae82-a15044606e40
-				summarizeBy: sum
+				summarizeBy: none
 				sourceColumn: MedianDays
 
-				annotation SummarizationSetBy = Automatic
+				annotation SummarizationSetBy = User
 
 				annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -204,10 +204,10 @@ createOrReplace
 			column P90Days
 				dataType: double
 				lineageTag: d081ff02-9df0-43e3-b4b4-b5feb37e6e6e
-				summarizeBy: sum
+				summarizeBy: none
 				sourceColumn: P90Days
 
-				annotation SummarizationSetBy = Automatic
+				annotation SummarizationSetBy = User
 
 				annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -571,10 +571,10 @@ createOrReplace
 			column MedianDays
 				dataType: double
 				lineageTag: 7d6f3ec6-52e6-4f72-bda1-235125681cef
-				summarizeBy: sum
+				summarizeBy: none
 				sourceColumn: MedianDays
 
-				annotation SummarizationSetBy = Automatic
+				annotation SummarizationSetBy = User
 
 				annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -589,10 +589,10 @@ createOrReplace
 			column P90Days
 				dataType: double
 				lineageTag: 4b6e3fc3-f15d-43dd-941b-9decb29f4b68
-				summarizeBy: sum
+				summarizeBy: none
 				sourceColumn: P90Days
 
-				annotation SummarizationSetBy = Automatic
+				annotation SummarizationSetBy = User
 
 				annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -684,11 +684,11 @@ createOrReplace
 			column Year
 				formatString: 0
 				lineageTag: 57c0ead9-745c-4e43-90cc-4b9be591b005
-				summarizeBy: sum
+				summarizeBy: none
 				isNameInferred
 				sourceColumn: [Year]
 
-				annotation SummarizationSetBy = Automatic
+				annotation SummarizationSetBy = User
 
 			column 'Month Label'
 				lineageTag: 9d3560e3-90eb-457c-8a74-e7e640440048
@@ -702,11 +702,11 @@ createOrReplace
 			column 'Month Sort'
 				formatString: 0
 				lineageTag: 78c6ecb0-5764-43b1-8681-f1fd2fa92a11
-				summarizeBy: sum
+				summarizeBy: none
 				isNameInferred
 				sourceColumn: [Month Sort]
 
-				annotation SummarizationSetBy = Automatic
+				annotation SummarizationSetBy = User
 
 			partition Dim_Period = calculated
 				mode: import
