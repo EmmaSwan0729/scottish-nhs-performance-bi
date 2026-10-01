@@ -71,3 +71,59 @@ checked which S08 boards had null values in the gap months (only S08000030).
       suppression guard
 - [ ] Replace S08000030 with the board name once the PHS lookup table is available
 - [ ] Note the gap in data-dictionary.md under the relevant fields
+
+## 2026-10-01 — Health board lookup: four PHS reference tables appended into Ref_HealthBoard
+
+**Context**
+Dim_HealthBoard is a DAX calculated table built from codes in the fact tables, so it only contained codes (e.g. S08000030), which are unreadable on report pages and especially on the Health Board Deep Dive drillthrough page.
+A check of the codes in use showed four sources were needed to label every code:
+- S08 regional boards — PHS Geography Codes and Labels, *Health Board 2014 – Health Board 2019*
+- SB special health boards — PHS Non Standard Geography Codes and Labels, *Special Health Boards and National Facilities*
+- S27 codes — PHS Geography Codes and Labels, *ISD Health Board of Treatment*
+- RA27 codes — PHS Non Standard Geography Codes and Labels, *Other Residential Categories*
+
+**Decision**
+- Each CSV stored in `data/bronze/<table>/<table>.csv` and loaded via `fnLoadBronzeTable` into a `src_` query (load disabled).
+- Each `src_` query keeps only the code and name columns, renamed to a common schema `HB` / `HBName`.
+- `Ref_HealthBoard` filters the health board table to current codes (`HBDateArchived` is null) and appends the three `src_` queries with `Table.Combine` (29 rows). The table is hidden and has no relationships.
+- `Dim_HealthBoard[Board Name]` is a calculated column using `LOOKUPVALUE` against `Ref_HealthBoard`, with S92000003 hard-coded as "Scotland" (it only appears as a country code in the PHS tables) and `COALESCE` falling back to the raw code.
+- All data sources set to the **Public** privacy level (PHS open data under OGL, public GitHub repo) rather than ignoring privacy levels.
+
+**Rationale**
+- Filtering archived codes is safe: none of the archived board codes (S08000018, 021, 023, 027) appear in the fact data, as PHS recodes historical records to current codes. Filtering also guarantees one name per code, which `LOOKUPVALUE` requires.
+- A single appended lookup keeps the DAX simple: new code families can be added in Power Query without changing the model.
+
+## 2026-10-01 — Encoding issue in special_health_boards.csv
+
+**Context**
+"The Golden Jubilee National Hospital" (SB0801) displayed as `The�Golden...`. Inspecting the raw bytes (`xxd`) showed the character between "The" and "Golden" is `0xA0` — a Latin-1/Windows-1252 non-breaking space — while the rest of the file is plain ASCII. A lone `0xA0` is invalid UTF-8, so reading the file with UTF-8 (`Encoding = 65001`, as used for all bronze files) produced the replacement character U+FFFD.
+
+**Decision**
+Bronze file left unchanged. In `src_SpecialHealthBoards`, the replacement character is replaced with a normal space and the value trimmed:
+`Text.Trim(Text.Replace(_, Character.FromNumber(65533), " "))`.
+
+**Rationale**
+Bronze stays a faithful copy of the source; the fix is documented and reproducible in the transformation layer. Changing the encoding for the whole file was unnecessary because only one byte was affected.
+
+## 2026-10-01 — Board Type classification and scope of board-level analysis
+
+**Decision**
+Calculated column `Dim_HealthBoard[Board Type]`, derived from the code prefix:
+
+| Board Type | Rule | Codes in data |
+|---|---|---|
+| Scotland | S92000003 | 1 |
+| Regional | starts with S08 | 14 |
+| Special | starts with SB | 1 (SB0801, Golden Jubilee) |
+| Other | everything else | 3 (S27000001, RA2702, RA2704) |
+
+Board-level visuals and the Health Board Deep Dive drillthrough include **Regional** and **Special** only.
+
+**Rationale**
+- *Other* codes are not organisations that can be benchmarked or held accountable: S27000001 is "Non-NHS Provider/Location", RA2702 is "Resident of the Rest of United Kingdom (Outside Scotland)", RA2704 is "Unknown Residency". They are typically small and often suppressed, giving blank or volatile measures.
+- *Scotland* is the benchmark on the deep dive page, so drilling into it would compare Scotland with itself.
+- *Special* (Golden Jubilee) is a real NHS provider and is kept, but it treats national referrals rather than a regional population, so comparisons with the Scotland average need a caveat on the page.
+- Classification uses code prefixes rather than the lookup tables, so it stays stable if label tables change.
+
+**Open question**
+The fact column is `HBT` (health board of treatment), yet it contains residence categories (RA27 codes). To confirm against the PHS waiting times data dictionary how these rows are assigned.
