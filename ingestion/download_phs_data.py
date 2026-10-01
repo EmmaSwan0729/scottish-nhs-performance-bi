@@ -141,8 +141,7 @@ def main() -> None:
             print(f"[FAIL] {table:<28} {error}")
 
     if manifest["tables"]:
-        if manifest["tables"]:
-            writer.write("_manifest.json", json.dumps(manifest, indent=2).encode("utf-8"))
+        writer.write("_manifest.json", json.dumps(manifest, indent=2).encode("utf-8"))
 
     if failures:
         sys.exit(f"{len(failures)} table(s) failed: {', '.join(failures)}")
