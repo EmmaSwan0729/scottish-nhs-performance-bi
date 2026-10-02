@@ -18,12 +18,13 @@ createOrReplace
 					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
 					        REMOVEFILTERS ( Dim_HealthBoard ),
 					        REMOVEFILTERS ( Dim_PatientType ),
-					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
+					        REMOVEFILTERS ( Dim_Specialty )
 					    )
 					VAR BoardSelected =
 					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
 					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
-					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Type] )
+					VAR SpecialtySelected = ISFILTERED ( Dim_Specialty[SpecialtyCode] ) || ISFILTERED ( Dim_Specialty[Specialty Name] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
 					        Fact_OngoingWaits,
@@ -69,12 +70,13 @@ createOrReplace
 					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
 					        REMOVEFILTERS ( Dim_HealthBoard ),
 					        REMOVEFILTERS ( Dim_PatientType ),
-					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
+					        REMOVEFILTERS ( Dim_Specialty )
 					    )
 					VAR BoardSelected =
 					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
 					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
-					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Type] )
+					VAR SpecialtySelected = ISFILTERED ( Dim_Specialty[SpecialtyCode] ) || ISFILTERED ( Dim_Specialty[Specialty Name] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
 					        Fact_OngoingWaits,
@@ -139,7 +141,7 @@ createOrReplace
 					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
 					        REMOVEFILTERS ( Dim_HealthBoard ),
 					        REMOVEFILTERS ( Dim_PatientType ),
-					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
+					        REMOVEFILTERS ( Dim_Specialty )
 					    )
 					VAR PriorPeriod = EOMONTH ( CurrentPeriod, -12 )
 					RETURN
@@ -174,7 +176,7 @@ createOrReplace
 					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
 					        REMOVEFILTERS ( Dim_HealthBoard ),
 					        REMOVEFILTERS ( Dim_PatientType ),
-					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
+					        REMOVEFILTERS ( Dim_Specialty )
 					    )
 					VAR PriorPeriod = EOMONTH ( CurrentPeriod, -12 )
 					RETURN
@@ -253,9 +255,12 @@ createOrReplace
 
 			column SpecialtyCode
 				dataType: string
+				isHidden
 				lineageTag: c7f544e2-8036-441e-8ff9-b285bbcb8758
 				summarizeBy: none
 				sourceColumn: SpecialtyCode
+
+				changedProperty = IsHidden
 
 				annotation SummarizationSetBy = Automatic
 
@@ -391,9 +396,10 @@ createOrReplace
 						      {"90thPercentile", "P90Days"},
 						      {"90thPercentileQF", "P90DaysQF"}
 						    }
-						  )
+						  ),
+						  FillBlankSpecialty = Table.TransformColumns(#"Renamed", {{"SpecialtyCode", each if _ = null or Text.Trim(_) = "" then "UNSPEC" else _, type text}})
 						in
-						  Renamed
+						  FillBlankSpecialty
 
 			annotation PBI_ResultType = Table
 
@@ -525,12 +531,15 @@ createOrReplace
 					        MAX ( Fact_CompletedWaits[PeriodEndDate] ),
 					        REMOVEFILTERS ( Dim_HealthBoard ),
 					        REMOVEFILTERS ( Dim_PatientType ),
-					        REMOVEFILTERS ( Fact_CompletedWaits[SpecialtyCode] )
+					        REMOVEFILTERS ( Dim_Specialty )
 					    )
 					VAR BoardSelected =
 					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
 					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
-					VAR SpecialtySelected = ISFILTERED ( Fact_CompletedWaits[SpecialtyCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Type] )
+					VAR SpecialtySelected =
+					    ISFILTERED ( Dim_Specialty[SpecialtyCode] )
+					        || ISFILTERED ( Dim_Specialty[Specialty Name] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
 					        Fact_CompletedWaits,
@@ -570,12 +579,15 @@ createOrReplace
 					        MAX ( Fact_CompletedWaits[PeriodEndDate] ),
 					        REMOVEFILTERS ( Dim_HealthBoard ),
 					        REMOVEFILTERS ( Dim_PatientType ),
-					        REMOVEFILTERS ( Fact_CompletedWaits[SpecialtyCode] )
+					        REMOVEFILTERS ( Dim_Specialty )
 					    )
 					VAR BoardSelected =
 					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
 					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
-					VAR SpecialtySelected = ISFILTERED ( Fact_CompletedWaits[SpecialtyCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Type] )
+					VAR SpecialtySelected =
+					    ISFILTERED ( Dim_Specialty[SpecialtyCode] )
+					        || ISFILTERED ( Dim_Specialty[Specialty Name] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
 					        Fact_CompletedWaits,
@@ -667,9 +679,12 @@ createOrReplace
 
 			column SpecialtyCode
 				dataType: string
+				isHidden
 				lineageTag: d211cfac-2648-432f-9c0e-685efc90cb9e
 				summarizeBy: none
 				sourceColumn: SpecialtyCode
+
+				changedProperty = IsHidden
 
 				annotation SummarizationSetBy = Automatic
 
@@ -805,9 +820,10 @@ createOrReplace
 						      {"90thPercentile", "P90Days"},
 						      {"90thPercentileQF", "P90DaysQF"}
 						    }
-						  )
+						  ),
+						  FillBlankSpecialty = Table.TransformColumns(#"Renamed", {{"SpecialtyCode", each if _ = null or Text.Trim(_) = "" then "UNSPEC" else _, type text}})
 						in
-						  Renamed
+						  FillBlankSpecialty
 
 			annotation PBI_ResultType = Table
 
@@ -1120,6 +1136,118 @@ createOrReplace
 
 			annotation PBI_ResultType = Table
 
+		table Ref_Specialty
+			isHidden
+			lineageTag: ba75af20-cfe3-4194-850b-157fb5a5af2b
+
+			column SpecialtyCode
+				dataType: string
+				isHidden
+				lineageTag: 6a0f86b3-ef69-40f7-a1c8-52f63cc819cd
+				summarizeBy: none
+				sourceColumn: SpecialtyCode
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+			column SpecialtyName
+				dataType: string
+				isHidden
+				lineageTag: 53fb1cd0-f729-48f0-9de4-5c0276619f1a
+				summarizeBy: none
+				sourceColumn: SpecialtyName
+
+				changedProperty = IsHidden
+
+				annotation SummarizationSetBy = Automatic
+
+			partition Ref_Specialty = m
+				mode: import
+				source =
+						let
+						    Source = src_Specialty,
+						    Kept = Table.SelectColumns(Source, {"Specialty", "SpecialtyName"}),
+						    Renamed = Table.RenameColumns(Kept, {{"Specialty", "SpecialtyCode"}}),
+						    Typed = Table.TransformColumnTypes(Renamed, {
+						        {"SpecialtyCode", type text},
+						        {"SpecialtyName", type text}
+						    }),
+						    Cleaned = Table.TransformColumns(Typed, {
+						        {"SpecialtyCode", Text.Trim, type text},
+						        {"SpecialtyName", each Text.Trim(Text.Replace(_, Character.FromNumber(65533), " ")), type text}
+						    }),
+						    NoZ9 = Table.SelectRows(Cleaned, each [SpecialtyCode] <> "Z9"),
+						    AddAll = Table.Combine({
+						        NoZ9,
+						        #table(type table [SpecialtyCode = text, SpecialtyName = text], {
+						            {"Z9", "All Specialties"},
+						            {"UNSPEC", "Unspecified / unlisted"}
+						        })
+						    }),
+						    Deduped = Table.Distinct(AddAll, {"SpecialtyCode"})
+						in
+						    Deduped
+
+			changedProperty = IsHidden
+
+			annotation PBI_ResultType = Table
+
+		table Dim_Specialty
+			lineageTag: 300be147-6e47-45d2-b9ad-74599fa196ab
+
+			column SpecialtyCode
+				lineageTag: 050ac822-8966-4397-9538-80a49d4b8974
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: Fact_OngoingWaits[SpecialtyCode]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Specialty Name'
+				lineageTag: 74684500-1041-4558-86d3-ce62f7a1a8f1
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Specialty Name]
+
+				annotation SummarizationSetBy = Automatic
+
+			column 'Is All Specialties'
+				formatString: """TRUE"";""TRUE"";""FALSE"""
+				lineageTag: fd0899f1-e59d-4c46-b803-5e1682b3e55e
+				summarizeBy: none
+				isNameInferred
+				sourceColumn: [Is All Specialties]
+
+				annotation SummarizationSetBy = Automatic
+
+			partition Dim_Specialty = calculated
+				mode: import
+				source =
+						
+						VAR Codes =
+						    FILTER (
+						        DISTINCT (
+						            UNION (
+						                DISTINCT ( Fact_OngoingWaits[SpecialtyCode] ),
+						                DISTINCT ( Fact_CompletedWaits[SpecialtyCode] )
+						            )
+						        ),
+						        NOT ISBLANK ( [SpecialtyCode] ) && TRIM ( [SpecialtyCode] ) <> ""
+						    )
+						RETURN
+						    ADDCOLUMNS (
+						        Codes,
+						        "Specialty Name",
+						            COALESCE (
+						                LOOKUPVALUE ( Ref_Specialty[SpecialtyName], Ref_Specialty[SpecialtyCode], [SpecialtyCode] ),
+						                [SpecialtyCode]
+						            ),
+						        "Is All Specialties", [SpecialtyCode] = "Z9"
+						    )
+
+			annotation PBI_Id = 6a7684ff3ee34659a9e07211bdddc412
+
 		relationship dcc085d3-db20-4368-a693-80cb4d1ee6a0
 			joinOnDateBehavior: datePartOnly
 			fromColumn: Dim_Period.PeriodEndDate
@@ -1148,6 +1276,14 @@ createOrReplace
 		relationship 87566bd3-ba48-3a24-97ca-5c4f210b536d
 			fromColumn: Fact_CompletedWaits.HealthBoardCode
 			toColumn: Dim_HealthBoard.HealthBoardCode
+
+		relationship e050d9b8-16b5-435d-ca4d-387cf9d25fc3
+			fromColumn: Fact_OngoingWaits.SpecialtyCode
+			toColumn: Dim_Specialty.SpecialtyCode
+
+		relationship 120c3f75-4911-7e6e-c511-dd8d3b1e2556
+			fromColumn: Fact_CompletedWaits.SpecialtyCode
+			toColumn: Dim_Specialty.SpecialtyCode
 
 		expression fnLoadBronzeTable =
 				(TableName as text) as table =>
@@ -1259,11 +1395,20 @@ createOrReplace
 
 			annotation PBI_ResultType = Table
 
+		expression src_Specialty =
+				let
+				  Source = fnLoadBronzeTable("specialty")
+				in
+				  Source
+			lineageTag: 636bb6af-948b-4ed7-a361-7f2e02bbc5b2
+
+			annotation PBI_ResultType = Table
+
 		annotation __PBI_TimeIntelligenceEnabled = 1
 
-		annotation PBI_QueryOrder = ["ResourceId_OngoingWaits","ResourceId_CompletedWaits","ResourceId_HealthBoardLabels","ResourceId_CountryLabels","ResourceId_SpecialHealthBoardLabels","ResourceId_SpecialtyLabels","fnLoadBronzeTable","src_OngoingWaits","GitHubRepoPath","src_CompletedWaits","Fact_OngoingWaits","Fact_CompletedWaits","Ref_HealthBoard","src_SpecialHealthBoards","src_IsdHealthBoardOfTreatment","src_OtherResidentialCategories"]
+		annotation PBI_QueryOrder = ["ResourceId_OngoingWaits","ResourceId_CompletedWaits","ResourceId_HealthBoardLabels","ResourceId_CountryLabels","ResourceId_SpecialHealthBoardLabels","ResourceId_SpecialtyLabels","fnLoadBronzeTable","src_OngoingWaits","GitHubRepoPath","src_CompletedWaits","Fact_OngoingWaits","Fact_CompletedWaits","Ref_HealthBoard","src_SpecialHealthBoards","src_IsdHealthBoardOfTreatment","src_OtherResidentialCategories","src_Specialty","Ref_Specialty"]
 
-		annotation __LastRPTime = 134353634708386868
+		annotation __LastRPTime = 134354542015824081
 
 		annotation PBI_ProTooling = ["WebModelingEdit","DaxQueryView_Desktop","TMDLView_Desktop"]
 

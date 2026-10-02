@@ -40,7 +40,7 @@ Snapshot of patients still waiting at the end of each month.
 | HBT | text | Health board of treatment code (boundaries as at 1 April 2019) | Code only. Renamed `HealthBoardCode`. Includes Scotland (S92000003), regional boards (S08), a special board (SB0801) and non-board categories (S27, RA27); see Lookup tables |
 | HBTQF | text | Qualifier for HBT | See Qualifiers |
 | PatientType | text | Patient type | Values: `Inpatient/Day case`, `New Outpatient` |
-| Specialty | text | Specialty of the clinician in charge | Code only. Renamed `SpecialtyCode`. `Z9` = All Specialties. Specialty rows do not sum to Z9 (low-volume specialties excluded). Blank code includes NHS GGC's unlisted code XSU |
+| Specialty | text | Specialty of the clinician in charge | Code only. Renamed `SpecialtyCode`. `Z9` = All Specialties. Specialty rows do not sum to Z9 (low-volume specialties excluded). Blank codes (including NHS GGC's unlisted XSU) are replaced with `UNSPEC` in Power Query |
 | SpecialtyQF | text | Qualifier for Specialty | See Qualifiers |
 | NumberWaiting | numeric | Patients waiting at month end | Additive across boards and patient types, not across specialties |
 | NumberWaitingQF | text | Qualifier for NumberWaiting | |
@@ -119,7 +119,11 @@ Board Name column, and the Country lookup was not downloaded.
 
 | Bronze table | Original columns used | Notes |
 |---|---|---|
-| specialty | TBC (code column, name column) | Renamed to `SpecialtyCode` / `SpecialtyName`. Z9 (All Specialties) is not in the file and is added manually in Power Query |
+| specialty | Specialty, SpecialtyName | Specialty renamed to `SpecialtyCode`; SpecialtyName kept. Two rows added in Power Query: `Z9` = All Specialties and `UNSPEC` = Unspecified / unlisted (neither is in the source file) |
+
+Some related specialties use separate codes (e.g. Endocrinology, Diabetes,
+and Endocrinology & Diabetes) because boards code them differently. They are
+kept separate rather than merged.
 
 ## Model dimensions derived from the data
 
@@ -128,6 +132,6 @@ Board Name column, and the Country lookup was not downloaded.
 | Dim_Period | Both fact tables (DAX) | PeriodEndDate, Year, Month Label, Month Sort | Month-end dates only, not a continuous calendar |
 | Dim_PatientType | Both fact tables (DAX) | PatientType | |
 | Dim_HealthBoard | Both fact tables (DAX) + Ref_HealthBoard | HealthBoardCode, Board Name, Board Type | Board Type by code prefix: S08 = Regional, SB = Special, S92 = Scotland, other = Other |
-| Dim_Specialty | Both fact tables (DAX) + Ref_Specialty | SpecialtyCode, Specialty Name, Is All Specialties | Planned for page 4 |
+| Dim_Specialty | Both fact tables (DAX) + Ref_Specialty | SpecialtyCode, Specialty Name, Is All Specialties | Blank codes filtered out as a safeguard; Is All Specialties = TRUE only for Z9 |
 
 Measures are documented separately (planned: `docs/measures.md`).
