@@ -127,3 +127,43 @@ Board-level visuals and the Health Board Deep Dive drillthrough include **Region
 
 **Open question**
 The fact column is `HBT` (health board of treatment), yet it contains residence categories (RA27 codes). To confirm against the PHS waiting times data dictionary how these rows are assigned.
+
+## 2026-10-02 — BoardSelected detection extended to Board Name
+
+**Context**
+All snapshot measures (Patients Waiting, Waiting Over 12 Weeks, Patients Seen, Median Wait (Days)) decide between the Scotland row (S92000003) and board rows using `ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )`. When board visuals switched their axis to `Board Name`, this returned FALSE, so the measures selected the Scotland row while the board filter was still applied — every bar went blank.
+
+**Decision**
+`BoardSelected = ISFILTERED ( Dim_HealthBoard[HealthBoardCode] ) || ISFILTERED ( Dim_HealthBoard[Board Name] )` in all four measures.
+`ISFILTERED ( Dim_HealthBoard )` (whole table) was rejected because a Board Type filter would then also count as "board selected".
+
+**Rule that follows**
+Board Type filters are applied at visual level only, on visuals whose axis is Board Name. A page-level Board Type filter would remove the Scotland row (Board Type = "Scotland") and blank the Scotland KPI cards.
+
+## 2026-10-02 — Benchmark and prior-year measures on a month-end period table
+
+**Context**
+`Dim_Period` contains only month-end dates (monthly ongoing waits, quarterly completed waits), so built-in time intelligence (DATEADD, SAMEPERIODLASTYEAR) is not suitable.
+
+**Decision**
+- Scotland benchmark: `CALCULATE ( [measure], REMOVEFILTERS ( Dim_HealthBoard ) )`. Inside the base measure, BoardSelected becomes FALSE and the Scotland row is used automatically; date and patient type filters are preserved.
+- 12 months ago: compute the current period with the same logic as the base measure's LatestPeriod, shift it with `EOMONTH ( CurrentPeriod, -12 )`, then evaluate the base measure with `REMOVEFILTERS ( Dim_Period )` and `Dim_Period[PeriodEndDate] = PriorPeriod`. EOMONTH keeps quarter-end dates aligned for quarterly data.
+- Differences of two percentages are reported as percentage points (labelled "pp"); Patients Waiting change is a percentage change.
+
+**Validation**
+Checked in a test table: Scotland column constant and equal to the Overview card; board minus Scotland equals the "vs Scotland" column; prior-year value minus change equals current value.
+
+## 2026-10-02 — Health Board Deep Dive: drillthrough and PatientType handling
+
+**Decision**
+- Drillthrough field: `Dim_HealthBoard[Board Name]`, source visuals filtered to Regional and Special boards.
+- **Keep all filters turned off**; PatientType carried between pages by **synced slicers** instead.
+
+**Rationale**
+With Keep all filters on, the source page's PatientType selection arrived as a drillthrough filter, which also restricted the slicer on the deep dive page to that single value, so users could not switch patient type. Synced slicers keep the selection consistent across pages while leaving it changeable.
+The PatientType slicer is single-select because Median Wait (Days) only returns a value for a single row (medians cannot be summed across patient types).
+
+**Other page behaviour**
+- Dynamic title from `Deep Dive Title` (`SELECTEDVALUE` of Board Name, with a usage hint when no board is selected).
+- `Special Board Note` shows a caveat only when Board Type = "Special" (Golden Jubilee, a national referral centre); returns an empty string otherwise.
+- Trend charts use linear lines: smooth interpolation created artificial peaks between quarterly median points.

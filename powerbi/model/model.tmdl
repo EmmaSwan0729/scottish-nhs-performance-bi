@@ -20,7 +20,9 @@ createOrReplace
 					        REMOVEFILTERS ( Dim_PatientType ),
 					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
 					    )
-					VAR BoardSelected = ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					VAR BoardSelected =
+					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
 					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
@@ -69,7 +71,9 @@ createOrReplace
 					        REMOVEFILTERS ( Dim_PatientType ),
 					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
 					    )
-					VAR BoardSelected = ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					VAR BoardSelected =
+					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
 					VAR SpecialtySelected = ISFILTERED ( Fact_OngoingWaits[SpecialtyCode] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
@@ -102,6 +106,120 @@ createOrReplace
 					    IF ( NOT HasSuppressed, SUMX ( ScopeRows, Fact_OngoingWaits[NumberOver12Weeks] ) )
 				formatString: 0
 				lineageTag: 73e7af62-ba57-45ef-bc99-3ff478d395a2
+
+			measure '% Waiting Over 12 Weeks (Scotland)' =
+					
+					CALCULATE (
+					    [% Waiting Over 12 Weeks],
+					    REMOVEFILTERS ( Dim_HealthBoard )
+					)
+				formatString: 0.0%;-0.0%;0.0%
+				displayFolder: Benchmark
+				lineageTag: 222d587f-5552-4b24-8854-660b7e15b628
+
+			measure '% Over 12 Weeks vs Scotland' =
+					
+					VAR BoardValue = [% Waiting Over 12 Weeks]
+					VAR ScotlandValue = [% Waiting Over 12 Weeks (Scotland)]
+					RETURN
+					    IF (
+					        NOT ISBLANK ( BoardValue ) && NOT ISBLANK ( ScotlandValue ),
+					        BoardValue - ScotlandValue
+					    )
+				formatString: +0.0%;-0.0%;0.0%
+				displayFolder: Benchmark
+				lineageTag: 42148c3a-e89b-4457-b107-d04ba20c269e
+
+				annotation PBI_FormatHint = {"isCustom":true}
+
+			measure '% Waiting Over 12 Weeks (12M Ago)' =
+					
+					VAR CurrentPeriod =
+					    CALCULATE (
+					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
+					        REMOVEFILTERS ( Dim_HealthBoard ),
+					        REMOVEFILTERS ( Dim_PatientType ),
+					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
+					    )
+					VAR PriorPeriod = EOMONTH ( CurrentPeriod, -12 )
+					RETURN
+					    CALCULATE (
+					        [% Waiting Over 12 Weeks],
+					        REMOVEFILTERS ( Dim_Period ),
+					        Dim_Period[PeriodEndDate] = PriorPeriod
+					    )
+				formatString: 0.0%;-0.0%;0.0%
+				displayFolder: Benchmark
+				lineageTag: a7d86fcb-75f0-4771-bb85-b9ddd98508d0
+
+			measure '% Over 12 Weeks Change vs 12M Ago' =
+					
+					VAR CurrentValue = [% Waiting Over 12 Weeks]
+					VAR PriorValue = [% Waiting Over 12 Weeks (12M Ago)]
+					RETURN
+					    IF (
+					        NOT ISBLANK ( CurrentValue ) && NOT ISBLANK ( PriorValue ),
+					        CurrentValue - PriorValue
+					    )
+				formatString: +0.0%;-0.0%;0.0%
+				displayFolder: Benchmark
+				lineageTag: aa553f10-04f0-473f-9c58-317d0e119189
+
+				annotation PBI_FormatHint = {"isCustom":true}
+
+			measure 'Patients Waiting (12M Ago)' =
+					
+					VAR CurrentPeriod =
+					    CALCULATE (
+					        MAX ( Fact_OngoingWaits[PeriodEndDate] ),
+					        REMOVEFILTERS ( Dim_HealthBoard ),
+					        REMOVEFILTERS ( Dim_PatientType ),
+					        REMOVEFILTERS ( Fact_OngoingWaits[SpecialtyCode] )
+					    )
+					VAR PriorPeriod = EOMONTH ( CurrentPeriod, -12 )
+					RETURN
+					    CALCULATE (
+					        [Patients Waiting],
+					        REMOVEFILTERS ( Dim_Period ),
+					        Dim_Period[PeriodEndDate] = PriorPeriod
+					    )
+				displayFolder: Benchmark
+				lineageTag: 8c414ade-358e-49aa-9b83-a3e96746c698
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Patients Waiting Change vs 12M Ago' =
+					
+					DIVIDE (
+					    [Patients Waiting] - [Patients Waiting (12M Ago)],
+					    [Patients Waiting (12M Ago)]
+					)
+				formatString: " +0.0%;-0.0%;0.0%"
+				displayFolder: Benchmark
+				lineageTag: 53947a5d-b96b-4aec-b18d-8fc5814c6b99
+
+				annotation PBI_FormatHint = {"isCustom":true}
+
+			measure 'Deep Dive Title' =
+					
+					VAR SelectedBoard = SELECTEDVALUE ( Dim_HealthBoard[Board Name] )
+					RETURN
+					    IF (
+					        ISBLANK ( SelectedBoard ),
+					        "Health Board Deep Dive — drill through from a board on the Overview or Activity pages",
+					        SelectedBoard & " — Health Board Deep Dive"
+					    )
+				displayFolder: Benchmark
+				lineageTag: 9c71cf00-7a9c-4ae9-b564-48bafc2944a6
+
+			measure 'Special Board Note' =
+					
+					IF (
+					    SELECTEDVALUE ( Dim_HealthBoard[Board Type] ) = "Special",
+					    "Note: The Golden Jubilee National Hospital is a national referral centre. Its case mix differs from regional boards, so comparisons with the Scotland average should be interpreted with caution.",
+					    ""
+					)
+				lineageTag: fce85cfc-c0fb-422c-9faf-0fd731d7984b
 
 			column HealthBoardCode
 				dataType: string
@@ -409,7 +527,9 @@ createOrReplace
 					        REMOVEFILTERS ( Dim_PatientType ),
 					        REMOVEFILTERS ( Fact_CompletedWaits[SpecialtyCode] )
 					    )
-					VAR BoardSelected = ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					VAR BoardSelected =
+					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
 					VAR SpecialtySelected = ISFILTERED ( Fact_CompletedWaits[SpecialtyCode] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
@@ -452,7 +572,9 @@ createOrReplace
 					        REMOVEFILTERS ( Dim_PatientType ),
 					        REMOVEFILTERS ( Fact_CompletedWaits[SpecialtyCode] )
 					    )
-					VAR BoardSelected = ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					VAR BoardSelected =
+					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
 					VAR SpecialtySelected = ISFILTERED ( Fact_CompletedWaits[SpecialtyCode] )
 					VAR ScopeRows =
 					    CALCULATETABLE (
@@ -484,9 +606,34 @@ createOrReplace
 					        COUNTROWS ( ScopeRows ) = 1,
 					        MAXX ( ScopeRows, Fact_CompletedWaits[MedianDays] )
 					    )
+				formatString: 0
 				lineageTag: a46c9310-05f4-44eb-b17b-aaac27704051
 
+			measure 'Median Wait (Days) (Scotland)' =
+					
+					CALCULATE (
+					    [Median Wait (Days)],
+					    REMOVEFILTERS ( Dim_HealthBoard )
+					)
+				displayFolder: Benchmark
+				lineageTag: f06c2033-3ca5-4382-ac1f-0d48c0a2de4d
+
 				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Median Wait vs Scotland (Days)' =
+					
+					VAR BoardValue = [Median Wait (Days)]
+					VAR ScotlandValue = [Median Wait (Days) (Scotland)]
+					RETURN
+					    IF (
+					        NOT ISBLANK ( BoardValue ) && NOT ISBLANK ( ScotlandValue ),
+					        BoardValue - ScotlandValue
+					    )
+				formatString: " +0;-0;0"
+				displayFolder: Benchmark
+				lineageTag: 9495f285-3348-48c5-87af-2fd0eab9b1c7
+
+				annotation PBI_FormatHint = {"isCustom":true}
 
 			column HealthBoardCode
 				dataType: string
@@ -973,106 +1120,6 @@ createOrReplace
 
 			annotation PBI_ResultType = Table
 
-		table src_SpecialHealthBoards
-			lineageTag: 2a507d81-be11-4cb7-ac2d-ac9a0fe922cc
-
-			column HB
-				dataType: string
-				lineageTag: 56086a57-8f67-4501-a332-f9bf30a3e298
-				summarizeBy: none
-				sourceColumn: HB
-
-				annotation SummarizationSetBy = Automatic
-
-			column HBName
-				dataType: string
-				lineageTag: aebccb71-1b4d-42ef-902c-514c848da5ce
-				summarizeBy: none
-				sourceColumn: HBName
-
-				annotation SummarizationSetBy = Automatic
-
-			partition src_SpecialHealthBoards = m
-				mode: import
-				source =
-						let
-						  Source = fnLoadBronzeTable("special_health_boards"),
-						  CleanedName = Table.TransformColumns(
-						    Source,
-						    {{"SHBName", each Text.Trim(Text.Replace(_, Character.FromNumber(65533), " ")), type text}}
-						  ),
-						  KeptColumns = Table.SelectColumns(CleanedName, {"SHB", "SHBName"}),
-						  Renamed = Table.RenameColumns(KeptColumns, {{"SHB", "HB"}, {"SHBName", "HBName"}}),
-						  Typed = Table.TransformColumnTypes(Renamed, {{"HB", type text}})
-						in
-						  Typed
-
-			annotation PBI_ResultType = Table
-
-		table src_IsdHealthBoardOfTreatment
-			lineageTag: 02177320-f0f7-4a44-825f-a5ef3df860cf
-
-			column HB
-				dataType: string
-				lineageTag: e9785acf-c911-4dfa-8366-5273f47f3eba
-				summarizeBy: none
-				sourceColumn: HB
-
-				annotation SummarizationSetBy = Automatic
-
-			column HBName
-				dataType: string
-				lineageTag: e1331f74-2a96-49ed-8fa3-87f6a9567093
-				summarizeBy: none
-				sourceColumn: HBName
-
-				annotation SummarizationSetBy = Automatic
-
-			partition src_IsdHealthBoardOfTreatment = m
-				mode: import
-				source =
-						let
-						  Source = fnLoadBronzeTable("isd_health_board_of_treatment"),
-						  KeptColumns = Table.SelectColumns(Source, {"ISDHBT", "ISDHBTName"}),
-						  Renamed = Table.RenameColumns(KeptColumns, {{"ISDHBT", "HB"}, {"ISDHBTName", "HBName"}}),
-						  Typed = Table.TransformColumnTypes(Renamed, {{"HB", type text}, {"HBName", type text}})
-						in
-						  Typed
-
-			annotation PBI_ResultType = Table
-
-		table src_OtherResidentialCategories
-			lineageTag: 3eafbb06-cf7e-44e3-8e7f-31211396568b
-
-			column HB
-				dataType: string
-				lineageTag: 9d6d6e06-c8be-4b2c-ab63-64b05fb32b7d
-				summarizeBy: none
-				sourceColumn: HB
-
-				annotation SummarizationSetBy = Automatic
-
-			column HBName
-				dataType: string
-				lineageTag: 326b0570-45a2-4dba-8808-98e3352db80d
-				summarizeBy: none
-				sourceColumn: HBName
-
-				annotation SummarizationSetBy = Automatic
-
-			partition src_OtherResidentialCategories = m
-				mode: import
-				source =
-						let
-						  Source = fnLoadBronzeTable("other_residential_categories"),
-						  KeptColumns = Table.SelectColumns(Source, {"CustomResidency", "CustomResidencyName"}),
-						  Renamed = Table.RenameColumns(KeptColumns, {{"CustomResidency", "HB"}, {"CustomResidencyName", "HBName"}}),
-						  Typed = Table.TransformColumnTypes(Renamed, {{"HB", type text}, {"HBName", type text}})
-						in
-						  Typed
-
-			annotation PBI_ResultType = Table
-
 		relationship dcc085d3-db20-4368-a693-80cb4d1ee6a0
 			joinOnDateBehavior: datePartOnly
 			fromColumn: Dim_Period.PeriodEndDate
@@ -1171,6 +1218,46 @@ createOrReplace
 			lineageTag: 746bda33-c182-4d9b-ad70-6d61e05cb989
 
 			annotation PBI_ResultType = Text
+
+		expression src_SpecialHealthBoards =
+				let
+				  Source = fnLoadBronzeTable("special_health_boards"),
+				  CleanedName = Table.TransformColumns(
+				    Source,
+				    {{"SHBName", each Text.Trim(Text.Replace(_, Character.FromNumber(65533), " ")), type text}}
+				  ),
+				  KeptColumns = Table.SelectColumns(CleanedName, {"SHB", "SHBName"}),
+				  Renamed = Table.RenameColumns(KeptColumns, {{"SHB", "HB"}, {"SHBName", "HBName"}}),
+				  Typed = Table.TransformColumnTypes(Renamed, {{"HB", type text}})
+				in
+				  Typed
+			lineageTag: bbad5235-d927-4a32-aac7-80a94794ee1f
+
+			annotation PBI_ResultType = Table
+
+		expression src_IsdHealthBoardOfTreatment =
+				let
+				  Source = fnLoadBronzeTable("isd_health_board_of_treatment"),
+				  KeptColumns = Table.SelectColumns(Source, {"ISDHBT", "ISDHBTName"}),
+				  Renamed = Table.RenameColumns(KeptColumns, {{"ISDHBT", "HB"}, {"ISDHBTName", "HBName"}}),
+				  Typed = Table.TransformColumnTypes(Renamed, {{"HB", type text}, {"HBName", type text}})
+				in
+				  Typed
+			lineageTag: cdb3aaf0-1ebb-4e6c-8560-5abb6ffb63e5
+
+			annotation PBI_ResultType = Table
+
+		expression src_OtherResidentialCategories =
+				let
+				  Source = fnLoadBronzeTable("other_residential_categories"),
+				  KeptColumns = Table.SelectColumns(Source, {"CustomResidency", "CustomResidencyName"}),
+				  Renamed = Table.RenameColumns(KeptColumns, {{"CustomResidency", "HB"}, {"CustomResidencyName", "HBName"}}),
+				  Typed = Table.TransformColumnTypes(Renamed, {{"HB", type text}, {"HBName", type text}})
+				in
+				  Typed
+			lineageTag: 411db97e-b073-4850-9aa6-e0f7c01dae6c
+
+			annotation PBI_ResultType = Table
 
 		annotation __PBI_TimeIntelligenceEnabled = 1
 
