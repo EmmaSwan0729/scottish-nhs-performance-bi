@@ -647,6 +647,55 @@ createOrReplace
 
 				annotation PBI_FormatHint = {"isCustom":true}
 
+			measure 'P90 Wait (Days)' =
+					
+					VAR LatestPeriod =
+					    CALCULATE (
+					        MAX ( Fact_CompletedWaits[PeriodEndDate] ),
+					        REMOVEFILTERS ( Dim_HealthBoard ),
+					        REMOVEFILTERS ( Dim_PatientType ),
+					        REMOVEFILTERS ( Dim_Specialty )
+					    )
+					VAR BoardSelected =
+					    ISFILTERED ( Dim_HealthBoard[HealthBoardCode] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Name] )
+					        || ISFILTERED ( Dim_HealthBoard[Board Type] )
+					VAR SpecialtySelected =
+					    ISFILTERED ( Dim_Specialty[SpecialtyCode] )
+					        || ISFILTERED ( Dim_Specialty[Specialty Name] )
+					VAR ScopeRows =
+					    CALCULATETABLE (
+					        Fact_CompletedWaits,
+					        Fact_CompletedWaits[PeriodEndDate] = LatestPeriod,
+					        KEEPFILTERS (
+					            FILTER (
+					                ALL ( Fact_CompletedWaits[HealthBoardCode] ),
+					                IF (
+					                    BoardSelected,
+					                    Fact_CompletedWaits[HealthBoardCode] <> "S92000003",
+					                    Fact_CompletedWaits[HealthBoardCode] = "S92000003"
+					                )
+					            )
+					        ),
+					        KEEPFILTERS (
+					            FILTER (
+					                ALL ( Fact_CompletedWaits[SpecialtyCode] ),
+					                IF (
+					                    SpecialtySelected,
+					                    Fact_CompletedWaits[SpecialtyCode] <> "Z9",
+					                    Fact_CompletedWaits[SpecialtyCode] = "Z9"
+					                )
+					            )
+					        )
+					    )
+					RETURN
+					    IF (
+					        COUNTROWS ( ScopeRows ) = 1,
+					        MAXX ( ScopeRows, Fact_CompletedWaits[P90Days] )
+					    )
+				formatString: 0
+				lineageTag: 20041b51-50ff-459d-9a28-a37a76b118b0
+
 			column HealthBoardCode
 				dataType: string
 				isHidden

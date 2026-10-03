@@ -356,3 +356,36 @@ version-controlled source of the model.
 **Why**
 Binary files cannot be diffed, duplicate the bronze data and bloat the repo. A .pbix
 can later be attached to a GitHub Release for reviewers.
+
+### 2026-10-03 — P90 Wait (Days) measure
+
+**Context**
+Median wait alone hides how long the slowest patients wait. PHS publishes a 90th percentile (`P90Days`) alongside the median in the completed waits file, so the report should show the long tail as well (report question 2).
+
+**Decision**
+- Added `P90 Wait (Days)` to `Fact_CompletedWaits`, copied from `Median Wait (Days)` with only the value column changed (`MedianDays` → `P90Days`).
+- Same logic as the median: latest period by default, Scotland total (`S92000003`) unless a board is filtered, All Specialties (`Z9`) unless a specialty is filtered, and a value only when exactly one row is in scope. So the measure needs a single PatientType and returns BLANK when the PHS value is suppressed (`:` / `:u` qualifiers).
+- Page 2: P90 card under the Median card, and P90 as a second line on the median wait trend chart (renamed "Median and 90th percentile wait over time (days)"). Format: whole number.
+
+**Why**
+Reusing the median pattern keeps both measures behaving identically under every filter combination. Validated against the raw `P90Days` column for Scotland / Z9 by PatientType: values match, P90 ≥ median in every period, and the Apr 2017–Dec 2018 gap returns BLANK, not 0.
+
+### 2026-10-03 — Methodology change: 2023 waiting times guidance (from 30 Jul 2025)
+
+**Context**
+From 30 Jul 2025 PHS calculates waits under the Scottish Government's 2023 waiting times guidance. A patient's clock can now be reset or paused even after 12 weeks (e.g. after a cancellation or non-attendance), so some reported waits are shorter. Waiting list sizes and activity counts are unaffected. For completed waits this is a clean break in trend; ongoing waits open at 30 Jul 2025 were recalculated, so earlier month-ends are a mix of old and new rules.
+
+PHS's extended impact assessment (28 Apr 2026, Mar 2025–Mar 2026) shows the effect on completed waits:
+- Inpatient/Day case P90: 478 → 433 days reported (−45); under 2012 rules 467 (−11).
+- New Outpatient P90: 373 → 335 days reported (−38); under 2012 rules 351 (−22).
+- Median: reported roughly flat, but would have risen under 2012 rules (Inpatient/Day case +15 days vs +5 reported).
+
+**Decision**
+- No adjustment to the data: the report shows PHS official statistics as published.
+- Added a dashed constant line "2023 guidance (Jul 2025)" at 30 Jul 2025 on the page 2 median/P90 trend chart, and a chart note explaining that much of the 2025/26 fall in P90 reflects the rule change rather than faster treatment.
+- Wait-length figures after Jul 2025 are not treated as directly comparable with earlier quarters in any written conclusion (README, chart notes).
+
+**Why**
+Without the annotation, the post-2025 drop in P90 reads as a genuine improvement. For Inpatient/Day case, roughly three-quarters of the reported fall is due to the rule change. Flagging it keeps the report's conclusions honest while still using the official figures.
+
+Source: PHS impact assessment – 2023 Waiting Times Guidance, extension covering 1 Mar 2025 to 31 Mar 2026 (published 28 Apr 2026).

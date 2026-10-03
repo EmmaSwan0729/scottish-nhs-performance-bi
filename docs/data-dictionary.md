@@ -81,14 +81,28 @@ BLANK when any in-scope row is suppressed, and charts carry a note
 ## Qualifiers (QF columns)
 
 Suppressed or missing values appear as empty cells, with the reason
-recorded in the matching QF column. Common codes:
+recorded in the matching QF column (e.g. `MedianDaysQF`, `P90DaysQF`).
+Common codes:
 
 | Code | Meaning |
 |---|---|
 | c | Confidential (suppressed) |
 | : | Not available |
+| u | Low reliability |
+| :u | Not available, low reliability (combination of the two codes above) |
 | z | Not applicable |
+| p | Provisional — may be revised |
 | r | Revised since first published |
+| b | Break in time series — not directly comparable before/after |
+<!-- | d | Derived (e.g. Scotland or all-specialty totals) | -->
+
+Codes observed in `P90DaysQF`: only `:` and `:u`, always on rows where
+`P90Days` is empty. No `p` or `b` flags appear on the latest Scotland rows,
+but this does not rule out the Jul 2025 methodology change: see the
+decision log entry "Methodology change: 2023 waiting times guidance".
+
+**How the model handles flagged rows:** measures return BLANK (not 0) when
+the in-scope row is empty, so suppressed values never show as zero in visuals.
 
 Full list: PHS Statistical Qualifiers lookup on opendata.nhs.scot.
 
