@@ -357,7 +357,7 @@ version-controlled source of the model.
 Binary files cannot be diffed, duplicate the bronze data and bloat the repo. A .pbix
 can later be attached to a GitHub Release for reviewers.
 
-### 2026-10-03 — P90 Wait (Days) measure
+## 2026-10-03 — P90 Wait (Days) measure
 
 **Context**
 Median wait alone hides how long the slowest patients wait. PHS publishes a 90th percentile (`P90Days`) alongside the median in the completed waits file, so the report should show the long tail as well (report question 2).
@@ -389,3 +389,25 @@ PHS's extended impact assessment (28 Apr 2026, Mar 2025–Mar 2026) shows the ef
 Without the annotation, the post-2025 drop in P90 reads as a genuine improvement. For Inpatient/Day case, roughly three-quarters of the reported fall is due to the rule change. Flagging it keeps the report's conclusions honest while still using the official figures.
 
 Source: PHS impact assessment – 2023 Waiting Times Guidance, extension covering 1 Mar 2025 to 31 Mar 2026 (published 28 Apr 2026).
+
+### 2026-10-03 — Quarters to Clear List measure
+
+**Context**
+Report question 5 asks whether the system can keep up. The combo chart on page 2 shows patients seen vs the waiting list, but leaves the reader to compare two series on very different scales. A single ratio makes the backlog easier to read: how many quarters of current activity it would take to clear the current list.
+
+**Decision**
+- Added `Quarters to Clear List` to `Fact_CompletedWaits`: `Patients Waiting` (month-end) ÷ `Patients Seen` (quarterly), both evaluated at the same period end.
+- The period is anchored to the completed waits table: `SeenPeriod` is the latest `PeriodEndDate` in `Fact_CompletedWaits` within the current period filter (board, patient type and specialty filters removed, as in the median pattern). `Patients Waiting` and `Patients Seen` are then both evaluated at `Dim_Period[PeriodEndDate] = SeenPeriod`.
+- Returns BLANK unless exactly one PatientType is in scope (`HASONEVALUE`), the period exists in the quarterly table, and both values are present with `Patients Seen > 0`.
+- Page 2: card under the P90 card; line chart "Quarters to clear the waiting list" (linear lines, continuous axis) with a dashed constant line "COVID-19 (Mar 2020)" at 23 Mar 2020 and an explanatory note.
+- Format: decimal, 1 place.
+
+**Why**
+- *Period alignment:* ongoing waits are monthly and completed waits are quarterly. Anchoring to the latest quarter end prevents a card from dividing, say, a July list by June activity once the next monthly release lands ahead of the quarterly one. On the trend chart, non-quarter months return BLANK automatically, so points appear only at quarter ends.
+- *Single patient type:* adding outpatient appointments to inpatient/day case admissions and then dividing has no clear meaning, so the total row and multi-select contexts return BLANK.
+- *Interpretation:* the ratio assumes no new referrals. It is a backlog indicator, not an actual wait, and is described that way in the chart note and README.
+- *Not affected by the 2023 guidance:* both inputs are counts, which PHS confirms are unchanged by the Jul 2025 rule change, so no methodology line is needed on this chart.
+
+Validated against manual calculation from a check table: Jun 2026 = 2.3 (Inpatient/Day case, 157,191 ÷ 67,674) and 1.5 (New Outpatient, 496,349 ÷ 320,424); Mar 2026 = 2.1 and 1.4; Dec 2012 New Outpatient = 0.6; non-quarter months and the total row are BLANK.
+
+**Note — series start (Dec 2012):** Inpatient/Day case shows 1.0 in the first quarter, against roughly 0.6 for the following quarters. Patients Seen in that quarter (45,805) is well below later quarters (around 80,000), and the inpatient waiting list roughly doubles between Oct 2012 and mid-2013. This is likely an incomplete start to the series rather than a real change. Kept as published; to verify against PHS metadata.

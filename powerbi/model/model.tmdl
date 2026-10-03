@@ -696,6 +696,30 @@ createOrReplace
 				formatString: 0
 				lineageTag: 20041b51-50ff-459d-9a28-a37a76b118b0
 
+			measure 'Quarters to Clear List' =
+					
+					VAR SeenPeriod =
+					    CALCULATE (
+					        MAX ( Fact_CompletedWaits[PeriodEndDate] ),
+					        REMOVEFILTERS ( Dim_HealthBoard ),
+					        REMOVEFILTERS ( Dim_PatientType ),
+					        REMOVEFILTERS ( Dim_Specialty )
+					    )
+					VAR Waiting =
+					    CALCULATE ( [Patients Waiting], Dim_Period[PeriodEndDate] = SeenPeriod )
+					VAR Seen =
+					    CALCULATE ( [Patients Seen], Dim_Period[PeriodEndDate] = SeenPeriod )
+					RETURN
+					    IF (
+					        HASONEVALUE ( Dim_PatientType[PatientType] )
+					            && NOT ISBLANK ( SeenPeriod )
+					            && NOT ISBLANK ( Waiting )
+					            && Seen > 0,
+					        DIVIDE ( Waiting, Seen )
+					    )
+				formatString: 0.0
+				lineageTag: dc74a38b-b998-46d9-b098-a5e9b21cf943
+
 			column HealthBoardCode
 				dataType: string
 				isHidden
