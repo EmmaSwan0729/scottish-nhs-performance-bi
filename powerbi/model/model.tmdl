@@ -223,6 +223,33 @@ createOrReplace
 					)
 				lineageTag: fce85cfc-c0fb-422c-9faf-0fd731d7984b
 
+			measure 'Patients Waiting (Pre-COVID)' = ```
+					
+					CALCULATE (
+					    [Patients Waiting],
+					    Dim_Period[PeriodEndDate] = DATE ( 2020, 2, 29 )
+					)
+					
+					```
+				formatString: 0
+				displayFolder: Benchmark
+				lineageTag: 1f572b4e-a8c8-41bc-aa49-20c1f5642819
+
+			measure 'Patients Waiting vs Pre-COVID %' =
+					
+					VAR CurrentWaiting = [Patients Waiting]
+					VAR Baseline = [Patients Waiting (Pre-COVID)]
+					RETURN
+					    IF (
+					        NOT ISBLANK ( CurrentWaiting ) && NOT ISBLANK ( Baseline ),
+					        DIVIDE ( CurrentWaiting - Baseline, Baseline )
+					    )
+				formatString: +0.0%;-0.0%;0.0%
+				displayFolder: Benchmark
+				lineageTag: a5f86a4d-0e33-4aeb-88a7-e94d8ff5d621
+
+				annotation PBI_FormatHint = {"isCustom":true}
+
 			column HealthBoardCode
 				dataType: string
 				isHidden
@@ -719,6 +746,26 @@ createOrReplace
 					    )
 				formatString: 0.0
 				lineageTag: dc74a38b-b998-46d9-b098-a5e9b21cf943
+
+			measure 'Quarters to Clear List (Scotland)' =
+					
+					CALCULATE ( [Quarters to Clear List], REMOVEFILTERS ( Dim_HealthBoard ) )
+				isHidden
+				displayFolder: Benchmark
+				lineageTag: 25142192-34b0-4900-97ae-c0d8cf8c5f6f
+
+				changedProperty = IsHidden
+
+				annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+			measure 'Quarters to Clear vs Scotland' =
+					
+					[Quarters to Clear List] - [Quarters to Clear List (Scotland)]
+				formatString: +0.0;-0.0;0.0
+				displayFolder: Benchmark
+				lineageTag: 115b5b75-f543-4c4f-abd6-6f7f28f6d413
+
+				annotation PBI_FormatHint = {"isCustom":true}
 
 			column HealthBoardCode
 				dataType: string

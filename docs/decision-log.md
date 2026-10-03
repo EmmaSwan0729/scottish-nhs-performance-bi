@@ -401,6 +401,8 @@ Report question 5 asks whether the system can keep up. The combo chart on page 2
 - Returns BLANK unless exactly one PatientType is in scope (`HASONEVALUE`), the period exists in the quarterly table, and both values are present with `Patients Seen > 0`.
 - Page 2: card under the P90 card; line chart "Quarters to clear the waiting list" (linear lines, continuous axis) with a dashed constant line "COVID-19 (Mar 2020)" at 23 Mar 2020 and an explanatory note.
 - Format: decimal, 1 place.
+- Page 3: fourth KPI card for the drilled-through board, with a "vs Scotland" reference label. Benchmark measures `Quarters to Clear List (Scotland)` (`REMOVEFILTERS(Dim_HealthBoard)`) and `Quarters to Clear vs Scotland` (difference, format `+0.0;-0.0;0.0`), same pattern as the other benchmark measures.
+- No 12-months-ago card on page 3: the Patients Waiting card already shows "vs 12 months ago" as a reference label.
 
 **Why**
 - *Period alignment:* ongoing waits are monthly and completed waits are quarterly. Anchoring to the latest quarter end prevents a card from dividing, say, a July list by June activity once the next monthly release lands ahead of the quarterly one. On the trend chart, non-quarter months return BLANK automatically, so points appear only at quarter ends.
@@ -411,3 +413,18 @@ Report question 5 asks whether the system can keep up. The combo chart on page 2
 Validated against manual calculation from a check table: Jun 2026 = 2.3 (Inpatient/Day case, 157,191 ÷ 67,674) and 1.5 (New Outpatient, 496,349 ÷ 320,424); Mar 2026 = 2.1 and 1.4; Dec 2012 New Outpatient = 0.6; non-quarter months and the total row are BLANK.
 
 **Note — series start (Dec 2012):** Inpatient/Day case shows 1.0 in the first quarter, against roughly 0.6 for the following quarters. Patients Seen in that quarter (45,805) is well below later quarters (around 80,000), and the inpatient waiting list roughly doubles between Oct 2012 and mid-2013. This is likely an incomplete start to the series rather than a real change. Kept as published; to verify against PHS metadata.
+
+### 2026-10-03 — Patients Waiting vs pre-COVID baseline
+
+**Context**
+Report question 1 asks whether the waiting list has recovered since COVID. A 12-month comparison shows the recent direction but not whether the list is back to where it was.
+
+**Decision**
+- Added `Patients Waiting (Pre-COVID)` (Patients Waiting at `Dim_Period[PeriodEndDate] = 29 Feb 2020`) and `Patients Waiting vs Pre-COVID %` to the Benchmark folder in `Fact_OngoingWaits`.
+- Shown as a "vs pre-COVID (Feb 2020)" reference label on the page 1 Patients waiting card, below "vs 12 months ago". Card only; not used on trend charts.
+
+**Why**
+- *Baseline month:* Feb 2020 is the last month-end before lockdown (23 Mar 2020); the Mar 2020 figure is already partly affected.
+- *Comparability:* list size is a count, which PHS confirms is unaffected by the Jul 2025 guidance change, so the comparison holds across the whole period.
+
+Validated: Feb 2020 baseline = 79,025 (Inpatient/Day case) and 269,222 (New Outpatient); Jun 2026 vs baseline = +98.9% and +84.4%.
