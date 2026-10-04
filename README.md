@@ -25,6 +25,8 @@ The report is organised around five questions:
 ## Findings by question
  
 All figures are NHS Scotland totals at the latest period in the data (30 June 2026) unless stated otherwise.
+
+![Overview](docs/images/page1-overview.png)
  
 ### 1. How long is the waiting list, and is it growing?
  
